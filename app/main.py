@@ -9,9 +9,13 @@ from job import (
     run_load_data_to_snowflake,
     run_create_classification_tables,
     run_train_model,
-    run_generate_predictions
+    run_generate_predictions,
+    run_train_llm,
+    run_predict_llm,
+    run_embeddings_cluster
 )
 from Snowflake.gbm_classification import get_model_info
+from Snowflake.llm_classification import check_finetune_job_status
 
 app = FastAPI()
 
@@ -31,18 +35,47 @@ class ClassificationRequest(BaseModel):
     create_validation: bool = False
     llm_train_source: bool = False
 
-# Pydantic model for training request
-class TrainRequest(BaseModel):
+# Pydantic model for GBM training request
+class GBMTrainRequest(BaseModel):
     training_table: str
     database: str = None
     schema: str = None
     warehouse: str = None
     role: str = None
 
-# Pydantic model for prediction request
-class PredictRequest(BaseModel):
+# Pydantic model for GBM prediction request
+class GBMPredictRequest(BaseModel):
     model_name: str
     predict_table: str
+    database: str = None
+    schema: str = None
+    warehouse: str = None
+    role: str = None
+
+# Pydantic model for LLM training request
+class LLMTrainRequest(BaseModel):
+    training_table: str
+    validation_table: str
+    target_column: str
+    database: str = None
+    schema: str = None
+    warehouse: str = None
+    role: str = None
+    model_type: str = 'llama3-8b'
+
+# Pydantic model for LLM prediction request
+class LLMPredictRequest(BaseModel):
+    model_name: str
+    predict_table: str
+    database: str = None
+    schema: str = None
+    warehouse: str = None
+    role: str = None
+
+# Pydantic model for Embeddings cluster request
+class EmbeddingsClusterRequest(BaseModel):
+    input_table: str
+    number_of_iterations: int
     database: str = None
     schema: str = None
     warehouse: str = None
@@ -149,18 +182,18 @@ async def create_classification(request: ClassificationRequest = Body(...)):
         return {"error": str(e)}
 
 @app.post("/classification/gbm/train")
-async def train_classification_model(request: TrainRequest = Body(...)):
+async def train_gbm_model(request: GBMTrainRequest = Body(...)):
     """
-    Train a classification model in Snowflake.
+    Train a GBM classification model in Snowflake.
 
     Parameters:
-        request (TrainRequest): The training request data.
+        request (GBMTrainRequest): The training request data.
 
     Returns:
         dict: The task ID of the Celery job.
     """
     try:
-        # Invoke the long-running job to train the model
+        # Invoke the long-running job to train the GBM model
         task = run_train_model.apply_async(args=[
             request.database,
             request.schema,
@@ -174,12 +207,12 @@ async def train_classification_model(request: TrainRequest = Body(...)):
         return {"error": str(e)}
 
 @app.post("/classification/gbm/predict")
-async def generate_classification_predictions(request: PredictRequest = Body(...)):
+async def predict_gbm_model(request: GBMPredictRequest = Body(...)):
     """
-    Generate predictions using a trained classification model in Snowflake.
+    Generate predictions using a trained GBM classification model in Snowflake.
 
     Parameters:
-        request (PredictRequest): The prediction request data.
+        request (GBMPredictRequest): The prediction request data.
 
     Returns:
         dict: The task ID of the Celery job.
@@ -200,7 +233,7 @@ async def generate_classification_predictions(request: PredictRequest = Body(...
         return {"error": str(e)}
 
 @app.get("/classification/gbm/info")
-async def get_classification_model_info(
+async def get_gbm_model_info(
     model_name: str,
     database: str = None,
     schema: str = None,
@@ -208,7 +241,7 @@ async def get_classification_model_info(
     role: str = None
 ):
     """
-    Retrieve model evaluation metrics for a classification model in Snowflake.
+    Retrieve model evaluation metrics for a GBM classification model in Snowflake.
 
     Parameters:
         model_name (str): The name of the model.
@@ -224,6 +257,114 @@ async def get_classification_model_info(
         # Retrieve model information
         info = get_model_info(database, schema, role, warehouse, model_name)
         return info
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.post("/classification/llm/train")
+async def train_llm_model(request: LLMTrainRequest = Body(...)):
+    """
+    Train an LLM classification model in Snowflake.
+
+    Parameters:
+        request (LLMTrainRequest): The training request data.
+
+    Returns:
+        dict: The task ID of the Celery job.
+    """
+    try:
+        # Invoke the long-running job to train the LLM model
+        task = run_train_llm.apply_async(args=[
+            request.training_table,
+            request.validation_table,
+            request.target_column,
+            request.database,
+            request.schema,
+            request.role,
+            request.warehouse,
+            request.model_type
+        ])
+        
+        return {"task_id": task.id}
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.post("/classification/llm/predict")
+async def predict_llm_model(request: LLMPredictRequest = Body(...)):
+    """
+    Generate predictions using a trained LLM classification model in Snowflake.
+
+    Parameters:
+        request (LLMPredictRequest): The prediction request data.
+
+    Returns:
+        dict: The task ID of the Celery job.
+    """
+    try:
+        # Invoke the long-running job to generate predictions
+        task = run_predict_llm.apply_async(args=[
+            request.predict_table,
+            request.model_name,
+            request.database,
+            request.schema,
+            request.role,
+            request.warehouse
+        ])
+        
+        return {"task_id": task.id}
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.get("/classification/llm/train/check")
+async def check_llm_finetune_status(
+    job_id: str,
+    database: str = None,
+    schema: str = None,
+    warehouse: str = None,
+    role: str = None
+):
+    """
+    Check the status of an LLM fine-tuning job in Snowflake.
+
+    Parameters:
+        job_id (str): The job ID of the fine-tuning job.
+        database (str, optional): The name of the database.
+        schema (str, optional): The name of the schema.
+        warehouse (str, optional): The name of the warehouse.
+        role (str, optional): The role to use.
+
+    Returns:
+        dict: The status and progress of the fine-tuning job.
+    """
+    try:
+        # Check the fine-tuning job status
+        status = check_finetune_job_status(job_id, database, schema, role, warehouse)
+        return status
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.post("/classification/embeddings/cluster")
+async def cluster_embeddings(request: EmbeddingsClusterRequest = Body(...)):
+    """
+    Cluster vector embeddings and run KMeans to identify where unmarked records belong.
+
+    Parameters:
+        request (EmbeddingsClusterRequest): The embeddings cluster request data.
+
+    Returns:
+        dict: The task ID of the Celery job.
+    """
+    try:
+        # Invoke the long-running job to cluster embeddings
+        task = run_embeddings_cluster.apply_async(args=[
+            request.database,
+            request.schema,
+            request.warehouse,
+            request.input_table,
+            request.number_of_iterations,
+            request.role
+        ])
+        
+        return {"task_id": task.id}
     except Exception as e:
         return {"error": str(e)}
 
