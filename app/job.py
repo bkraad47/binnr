@@ -2,6 +2,7 @@ from celery import Celery
 from Snowflake.data_util import load_data_to_snowflake, create_classification_tables
 from Snowflake.gbm_classification import train_model, generate_predictions
 from Snowflake.llm_classification import train_llm, predict_llm
+from Snowflake.embeddings_classification import embeddings_cluster
 import os
 
 celery = Celery(__name__, broker=os.getenv('CELERY_BROKER_URL'), backend=os.getenv('CELERY_RESULT_BACKEND'))
@@ -29,3 +30,7 @@ def run_train_llm(training_table, validation_table, target_column, database, sch
 @celery.task
 def run_predict_llm(predict_table, model_name, database, schema, role, warehouse):
     return predict_llm(predict_table, model_name, database, schema, role, warehouse)
+
+@celery.task
+def run_embeddings_cluster(database, schema, warehouse, input_table, number_of_iterations, role):
+    return embeddings_cluster(database, schema, warehouse, input_table, number_of_iterations, role)

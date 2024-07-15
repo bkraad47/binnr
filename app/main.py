@@ -11,7 +11,8 @@ from job import (
     run_train_model,
     run_generate_predictions,
     run_train_llm,
-    run_predict_llm
+    run_predict_llm,
+    run_embeddings_cluster
 )
 from Snowflake.gbm_classification import get_model_info
 from Snowflake.llm_classification import check_finetune_job_status
@@ -66,6 +67,15 @@ class LLMTrainRequest(BaseModel):
 class LLMPredictRequest(BaseModel):
     model_name: str
     predict_table: str
+    database: str = None
+    schema: str = None
+    warehouse: str = None
+    role: str = None
+
+# Pydantic model for Embeddings cluster request
+class EmbeddingsClusterRequest(BaseModel):
+    input_table: str
+    number_of_iterations: int
     database: str = None
     schema: str = None
     warehouse: str = None
@@ -329,6 +339,32 @@ async def check_llm_finetune_status(
         # Check the fine-tuning job status
         status = check_finetune_job_status(job_id, database, schema, role, warehouse)
         return status
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.post("/classification/embeddings/cluster")
+async def cluster_embeddings(request: EmbeddingsClusterRequest = Body(...)):
+    """
+    Cluster vector embeddings and run KMeans to identify where unmarked records belong.
+
+    Parameters:
+        request (EmbeddingsClusterRequest): The embeddings cluster request data.
+
+    Returns:
+        dict: The task ID of the Celery job.
+    """
+    try:
+        # Invoke the long-running job to cluster embeddings
+        task = run_embeddings_cluster.apply_async(args=[
+            request.database,
+            request.schema,
+            request.warehouse,
+            request.input_table,
+            request.number_of_iterations,
+            request.role
+        ])
+        
+        return {"task_id": task.id}
     except Exception as e:
         return {"error": str(e)}
 
