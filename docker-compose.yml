@@ -8,9 +8,10 @@ services:
     depends_on:
       - redis
       - worker
-    environment:
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    env_file:
+      - .env
+    volumes:
+      - uploads:/tmp/uploads
 
   redis:
     image: "redis:alpine"
@@ -22,10 +23,14 @@ services:
 
   worker:
     build: .
-    command: celery -A main.celery worker --loglevel=info --events --concurrency=5
+    command: celery -A job.celery worker --loglevel=info --events --concurrency=5
     depends_on:
       redis:
         condition: service_healthy
-    environment:
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    env_file:
+      - .env
+    volumes:
+      - uploads:/tmp/uploads
+
+volumes:
+  uploads:
