@@ -54,7 +54,6 @@ SNOWFLAKE_CONFIG='{
 
 **Build and run the Docker containers:**
 
-Copy code
 `docker-compose up --build`
 
 # API Endpoints Overview
