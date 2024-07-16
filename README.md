@@ -139,7 +139,22 @@ SNOWFLAKE_CONFIG='{
   - `schema` (str, optional): The name of the schema.
   - `warehouse` (str, optional): The name of the warehouse.
   - `role` (str, optional): The role to use.
-  - `model_type` (str, optional): The model type (default: 'llama3-8b'). More at - https://docs.snowflake.com/en/user-guide/snowflake-cortex/cortex-finetuning
+  - `model_type` (str, optional): The model type (default: 'llama3-8b')
+  
+    ###### Available Models
+    Specify one of the following values for the model to be used:
+    
+    1. `snowflake-arctic`
+    2. `mistral-large`
+    3. `reka-flash`
+    4. `reka-core`
+    5. `mixtral-8x7b`
+    6. `llama2-70b-chat`
+    7. `llama3-8b`
+    8. `llama3-70b`
+    9. `mistral-7b`
+    10. `gemma-7b`
+    More at - [https://docs.snowflake.com/en/user-guide/snowflake-cortex/cortex-finetuning](https://docs.snowflake.com/en/sql-reference/functions/complete-snowflake-cortex#arguments)
 - **Returns:** Finetune job id.
 
 ## `/classification/llm/predict`
