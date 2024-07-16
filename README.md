@@ -194,7 +194,7 @@ KMeans is an unsupervised learning algorithm used for clustering. It partitions 
 ## Embeddings
 Embeddings are low-dimensional vector representations of high-dimensional data, such as text. They capture the semantic meaning of the data, enabling algorithms to perform operations like clustering and classification more effectively. In this tool, embeddings are used to cluster textual data and identify the most similar target for unmarked records.
 
-# Example
+# Example / Test Run
 Lets start the application.
 1. Download the code
 2. Install/start docker
