@@ -17,7 +17,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def embeddings_cluster(database, schema, warehouse, input_table, number_of_iterations, role):
+def embeddings_cluster(database, schema, warehouse, input_table, role, number_of_iterations=2):
     # Load connection details from a JSON file
     config = json.loads(os.getenv('SNOWFLAKE_CONFIG'))
 
