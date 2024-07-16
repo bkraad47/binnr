@@ -220,10 +220,10 @@ Here, schema = our working schema, table_name = 'tweets', target_column = 'senti
 - Now lets check the accuracy of the model. This is done by running the following swagger endpoint `/classification/gbm/accuracy`.
 
 # License
-This project is licensed under the FreeBSD License. This license allows for the free use, modification, and distribution of the software, even for commercial purposes, under the condition that the original copyright notice and this permission notice are included in all copies or substantial portions of the software.
+This project is licensed under the BSD License. This license allows for the free use, modification, and distribution of the software, even for commercial purposes, under the condition that the original copyright notice and this permission notice are included in all copies or substantial portions of the software.
 
 ### To modify Snowflake methods and algorithms, modify the files in the path `/app/Snowflake`
-### As this is FreeBSD software I am no liable for warranty. But as stated above you can modify and optimize the code anytime.
+### As this is BSD software I am no liable for warranty. But as stated above you can modify and optimize the code anytime.
 
 # FAQ
 - Want to add other algorithms or processes? 
