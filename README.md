@@ -35,7 +35,7 @@ Ensure you have the following Python packages installed:
    ```
 
 2. **Set up your environment**:
-##### Note SnowFlake account must be in AWS-Orgeon or other Cortex supported zone
+***Note SnowFlake account must be in AWS-Orgeon or other Cortex supported zone***
 
 Create a .env file in the root directory and add the following environment variables:
 
