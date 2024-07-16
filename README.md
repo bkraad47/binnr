@@ -154,7 +154,8 @@ SNOWFLAKE_CONFIG='{
     8. `llama3-70b`
     9. `mistral-7b`
     10. `gemma-7b`
-    More at - [https://docs.snowflake.com/en/user-guide/snowflake-cortex/cortex-finetuning](https://docs.snowflake.com/en/sql-reference/functions/complete-snowflake-cortex#arguments)
+  
+    More at - https://docs.snowflake.com/en/sql-reference/functions/complete-snowflake-cortex#arguments)
 - **Returns:** Finetune job id.
 
 ## `/classification/llm/predict`
