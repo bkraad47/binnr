@@ -88,7 +88,7 @@ SNOWFLAKE_CONFIG='{
   - `template` (str, optional): A template for formatting, source column will be formatted using this template.
   - `create_validation` (bool, optional): Whether to create validation on training data(split is random 90-10).
   - `llm_train_source` (bool, optional): Whether to prepare data to train LLM's. Creates prompts for LLM training in source column.
-- **Returns:** Combination of source columns as concat string, in template format or concatinated using ':'. Takes target column and creates target table of target column and target column numbered. The source and target columns numbered added to a copy of base table, training, validation and predict tables(Targets not being defined would be null).
+- **Returns:** Combination of source columns as concat string, in template format or concatinated using ':' based on. Also takes target column and creates target table of target column and target column numbered. The source and target columns numbered added to a copy of base table, training, validation and predict tables(Targets not being defined would be null).
 
 ## `/classification/gbm/train`
 **Description:** Train a GBM classification model in Snowflake.
