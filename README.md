@@ -60,7 +60,7 @@ SNOWFLAKE_CONFIG='{
 # API Endpoints Overview
 
 ## `/data/upload`
-**Description:** Upload a file and initiate a long-running job to load data into Snowflake. This process creates its own stage automatically. 
+**Description:** Upload a CSV file and initiate a long-running job to load data into Snowflake. This process creates its own stage automatically. 
 **Important ensure all column headers in the upload file are lowercase.**
 
 - **Method:** POST
