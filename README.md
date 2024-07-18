@@ -284,8 +284,25 @@ This job will return 2 items 1. model_name 2. Cotertex finetune job_id as an arr
 ```
 {
   "model_name": "mistral_7b_temp_dolly_train_<yyyymmddhhMMss>",
-  "llm_prompt": "When did Virgin Australia start operating?",
+  "llm_prompt": "Which is a species of fish? Tope or Rope",
   "temperature": 0.1
+}
+```
+Response:
+```
+{
+  "choices": [
+    {
+      "messages": " Tope"
+    }
+  ],
+  "created": 1721285201,
+  "model": "mistral-7b",
+  "usage": {
+    "completion_tokens": 3,
+    "prompt_tokens": 21,
+    "total_tokens": 24
+  }
 }
 ```
 
