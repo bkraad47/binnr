@@ -87,7 +87,7 @@ SNOWFLAKE_CONFIG='{
   - `role` (str, optional): The role to use.
   - `template` (str, optional): A template for formatting, source column will be formatted using this template.
   - `create_validation` (bool, optional): Whether to create validation on training data(split is random 90-10).
-  - `llm_train_source` (bool, optional): Whether to prepare data to train LLM's. Creates prompts for LLM training in source column.
+  - `llm_calssification_train_source` (bool, optional): Whether to prepare data to train LLM's. Creates prompts for LLM training in source column. E.g. Converted text on SOURCE will be "hooray, we won" Emotion: Happy, Sad, Angry etc. Single response on target train only for happy. No elaborated text. TARGET will be happy.
 - **Returns:** Combination of source columns as concat string, in template format or concatinated using ':' based on. Also takes target column and creates target table of target column and target column numbered. The source and target columns numbered added to a copy of base table, training, validation and predict tables(Targets not being defined would be null).
 
 ## `/classification/gbm/train`
@@ -183,6 +183,26 @@ SNOWFLAKE_CONFIG='{
   - `role` (str, optional): The role to use.
 - **Returns:** The status and progress of the fine-tuning job.
 
+## `/classification/llm/response`
+**Description:** This function is designed to interact with a Large Language Model (LLM) hosted within a Snowflake environment. It sends a text prompt to the LLM and retrieves the model's response. This can be particularly useful for applications requiring natural language processing capabilities, such as text generation, question answering, or sentiment analysis.
+
+- **Method:** GET
+- **Parameters:**
+  - `model_name` (str): The name of the LLM model to query. This should correspond to a model that has been previously trained or deployed within Snowflake.
+  - `llm_prompt` (str): The text prompt to send to the LLM. This could be a question, a statement, or any piece of text that the model is expected to process and respond to.
+  - `database` (str, optional): The name of the Snowflake database where the LLM model is stored. If not specified, the function will use the default database configured in the Snowflake connection.
+        schema (str, optional): The name of the Snowflake schema under the specified database where the LLM model is located. If not provided, the default schema for the connection will be used.
+        warehouse (str, optional): The name of the Snowflake warehouse to use for running the query. This parameter allows for specifying the computational resources for the query execution. If omitted, the default warehouse for the Snowflake session will be utilized.
+        role (str, optional): The Snowflake role to assume for executing the query. This role should have the necessary permissions to access the model and execute queries. If not specified, the current role of the Snowflake session will be used.
+        llm_role (str, optional): An additional role parameter specifically for the LLM query. This can be used to define roles with permissions tailored to LLM operations within Snowflake. Default: user
+        llm_temperature (float, optional): A parameter controlling the randomness of the LLM's responses. A higher temperature results in more varied and creative responses, while a lower temperature produces more deterministic and predictable outputs. If not set, the model's default temperature setting is used. Default: 0.1
+        llm_max_tokens (int, optional): The maximum number of tokens (words or pieces of words) that the LLM's response can contain. This limits the length of the generated text. If not specified, the model's default maximum token count is applied. Default: 100
+        llm_top_p (float, optional): This parameter controls the diversity of the LLM's responses by limiting the token selection to those with a cumulative probability above the specified threshold. A higher value increases diversity, while a lower value makes the model's responses more focused. If not provided, the default value for the model is used. Default: 0
+
+- **Returns:**  A dictionary containing the status and progress of the LLM query. This typically includes information about the success of the query, any errors encountered, and the generated response from the LLM.
+
+More at - https://docs.snowflake.com/en/sql-reference/functions/complete-snowflake-cortex
+
 ## `/classification/embeddings/cluster`
 **Description:** Cluster vector embeddings and run KMeans to identify where unmarked records belong.
 
@@ -234,6 +254,40 @@ Here, schema = our working schema, table_name = 'tweets', target_column = 'senti
 - Next lets train a model at `/classification/gbm/train`. schema = our working schema, training_table = 'tweets_source_target_train'. Now sit back have a cup of coffee and wait for the training to complete. Once the task will give us a model_name.
 - To predict results, we need to run the following swagger endpoint `/classification/gbm/predict`. Here, schema = our working schema, model_name = from the previous step, predict_table = 'tweets_source_target_predict'. At the end of this job it will produce a results table with predicted class.
 - Now lets check the accuracy of the model. This is done by running the following swagger endpoint `/classification/gbm/accuracy`.
+
+# Train and use custom LLM Example
+Dataset - https://www.kaggle.com/datasets/snehilsanyal/databricks-dolly-15k-dataset
+- After stating binnr lets download the dataset and upload the 'databricks-dolly-15k.csv' to the table name dolly. Using swagger endpoint `/data/upload`
+- Now lets prepare the data for training. This is done by running the following swagger endpoint `/data/create/tables/classification`
+```
+{
+  "table_name": "dolly",
+  "source_columns": [
+    "instruction"
+  ],
+  "target_column": "response",
+  "create_validation": true
+}
+```
+- Next lets train our new model on mistral-7b  `/classification/llm/train`
+```
+{
+  "training_table": "temp_dolly_train_<yyyymmddhhMMss>",
+  "validation_table": "temp_dolly_validate_<yyyymmddhhMMss>",
+  "target_column": "response",
+  "model_type": "mistral-7b"
+}
+```
+This job will return 2 items 1. model_name 2. Cotertex finetune job_id as an array object
+- Lets wait for the cortex job to complete training our model. We can check the status at `/classification/lmm/train/check`, by using the cortex_job_id
+- We can now use the model_name to let generate llm responses. This is done by running the following swagger endpoint `/classification/llm/response`
+```
+{
+  "model_name": "mistral_7b_temp_dolly_train_<yyyymmddhhMMss>",
+  "llm_prompt": "When did Virgin Australia start operating?",
+  "temperature": 0.1
+}
+```
 
 # License
 This project is licensed under the BSD License. This license allows for the free use, modification, and distribution of the software, even for commercial purposes, under the condition that the original copyright notice and this permission notice are included in all copies or substantial portions of the software.

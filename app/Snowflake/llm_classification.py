@@ -79,6 +79,7 @@ def train_llm(training_table, validation_table, target_column, database=None, sc
     
     except snowflake.connector.errors.ProgrammingError as e:
         logging.error(f"An error occurred: {e}")
+        raise e
     
     finally:
         cursor.close()
@@ -109,7 +110,7 @@ def predict_llm(predict_table, model_name, database=None, schema=None, role=None
     
     except snowflake.connector.errors.ProgrammingError as e:
         logging.error(f"An error occurred: {e}")
-    
+        raise e
     finally:
         cursor.close()
         conn.close()
@@ -139,8 +140,39 @@ def check_finetune_job_status(job_id, database=None, schema=None, role=None, war
 
     except snowflake.connector.errors.ProgrammingError as e:
         logging.error(f"An error occurred: {e}")
+        raise e
 
     finally:
         cursor.close()
         conn.close()
 
+def interact_llm(model_name, llm_prompt, database, schema, role, warehouse, llm_role='user', llm_temperature=0.1, llm_max_tokens=100, llm_top_p=0):
+    config = load_config()
+    conn = establish_connection(config, role, warehouse, database, schema)
+
+    create_llm_response = f"""
+    SELECT SNOWFLAKE.CORTEX.COMPLETE('{model_name}', [
+        {{'role': '{llm_role}', 'content': '{llm_prompt}'}}], 
+        {{'temperature': {llm_temperature}, 'max_tokens': {llm_max_tokens}, 'top_p': {llm_top_p} }}) as llm_response;
+    """
+    try:
+        cursor = conn.cursor()
+        
+        # Execute the subsequent SQL command to create the classification table
+        cursor.execute(create_llm_response)
+                
+        # Fetch the result
+        result = cursor.fetchone()
+        
+        # Convert the result to JSON
+        result_json = result[0]
+        
+        return result_json
+    
+    except snowflake.connector.errors.ProgrammingError as e:
+        logging.error(f"An error occurred: {e}")
+        raise e
+    
+    finally:
+        cursor.close()
+        conn.close()

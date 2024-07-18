@@ -15,7 +15,7 @@ from job import (
     run_embeddings_cluster
 )
 from Snowflake.gbm_classification import get_model_info
-from Snowflake.llm_classification import check_finetune_job_status
+from Snowflake.llm_classification import check_finetune_job_status, interact_llm
 
 app = FastAPI()
 
@@ -33,7 +33,7 @@ class ClassificationRequest(BaseModel):
     role: str = None
     template: str = None
     create_validation: bool = False
-    llm_train_source: bool = False
+    llm_calssification_train_source: bool = False
 
 # Pydantic model for GBM training request
 class GBMTrainRequest(BaseModel):
@@ -174,7 +174,7 @@ async def create_classification(request: ClassificationRequest = Body(...)):
             request.role,
             request.template,
             request.create_validation,
-            request.llm_train_source
+            request.llm_calssification_train_source
         ])
         
         return {"task_id": task.id}
@@ -339,6 +339,46 @@ async def check_llm_finetune_status(
         # Check the fine-tuning job status
         status = check_finetune_job_status(job_id, database, schema, role, warehouse)
         return status
+    except Exception as e:
+        return {"error": str(e)}
+    
+@app.get("/classification/llm/response")
+async def interact_llm_async(
+    model_name: str,
+    llm_prompt: str,
+    database: str = None,
+    schema: str = None,
+    warehouse: str = None,
+    role: str = None,
+    llm_role: str = 'user',
+    llm_temperature: float = 0.1,
+    llm_max_tokens: int = 100,
+    llm_top_p: float = 0
+):
+    """
+    This function is designed to interact with a Large Language Model (LLM) hosted within a Snowflake environment. It sends a text prompt to the LLM and retrieves the model's response. This can be particularly useful for applications requiring natural language processing capabilities, such as text generation, question answering, or sentiment analysis.
+
+    Parameters:
+        model_name (str): The name of the LLM model to query. This should correspond to a model that has been previously trained or deployed within Snowflake.
+        llm_prompt (str): The text prompt to send to the LLM. This could be a question, a statement, or any piece of text that the model is expected to process and respond to.
+        database (str, optional): The name of the Snowflake database where the LLM model is stored. If not specified, the function will use the default database configured in the Snowflake connection.
+        schema (str, optional): The name of the Snowflake schema under the specified database where the LLM model is located. If not provided, the default schema for the connection will be used.
+        warehouse (str, optional): The name of the Snowflake warehouse to use for running the query. This parameter allows for specifying the computational resources for the query execution. If omitted, the default warehouse for the Snowflake session will be utilized.
+        role (str, optional): The Snowflake role to assume for executing the query. This role should have the necessary permissions to access the model and execute queries. If not specified, the current role of the Snowflake session will be used.
+        llm_role (str, optional): An additional role parameter specifically for the LLM query. This can be used to define roles with permissions tailored to LLM operations within Snowflake.
+        llm_temperature (float, optional): A parameter controlling the randomness of the LLM's responses. A higher temperature results in more varied and creative responses, while a lower temperature produces more deterministic and predictable outputs. If not set, the model's default temperature setting is used.
+        llm_max_tokens (int, optional): The maximum number of tokens (words or pieces of words) that the LLM's response can contain. This limits the length of the generated text. If not specified, the model's default maximum token count is applied.
+        llm_top_p (float, optional): This parameter controls the diversity of the LLM's responses by limiting the token selection to those with a cumulative probability above the specified threshold. A higher value increases diversity, while a lower value makes the model's responses more focused. If not provided, the default value for the model is used.
+
+    Returns:
+        dict: A dictionary containing the status and progress of the LLM query. This typically includes information about the success of the query, any errors encountered, and the generated response from the LLM.
+
+    This function facilitates the integration of advanced natural language processing capabilities into applications by leveraging the computational power and scalability of Snowflake and the sophistication of Large Language Models.
+    """
+    try:
+        # Check the fine-tuning job status
+        response = interact_llm(model_name, llm_prompt, database, schema, role, warehouse, llm_role, llm_temperature, llm_max_tokens, llm_top_p)
+        return response
     except Exception as e:
         return {"error": str(e)}
 
