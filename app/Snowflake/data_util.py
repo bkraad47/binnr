@@ -76,6 +76,7 @@ def load_data_to_snowflake(database, schema, warehouse, file_path, table_name, r
 
     except Exception as e:
         logging.error(f"Error loading data to Snowflake: {e}")
+        raise e
     return json.dumps(result)
 
 def create_target_table(connection, database, schema, warehouse, table_name, target_column, role):
@@ -96,9 +97,10 @@ def create_target_table(connection, database, schema, warehouse, table_name, tar
         result.append({"table": f"{database}.{schema}.{target_table_name}"})
     except Exception as e:
         logging.error(f"Error creating target table: {e}")
+        raise e
     return result
 
-def create_classification_tables(database, schema, warehouse, table_name, source_columns, target_column, role, template=None, create_validation=False, llm_train_source=False):
+def create_classification_tables(database, schema, warehouse, table_name, source_columns, target_column, role, template=None, create_validation=False, llm_calssification_train_source=False):
     result = []
     try:
         # Load connection details from the environment variable
@@ -142,13 +144,13 @@ def create_classification_tables(database, schema, warehouse, table_name, source
                 for col in source_columns:
                     template = template.replace(f"{col.lower()}", f"IFNULL(a.\"" + col.lower() + "\", '')")
                 formatted_template = template.replace("{", "',").replace("}", ",'")
-                if llm_train_source:
+                if llm_calssification_train_source:
                     source_sql = f"CONCAT('"+formatted_template+"',"+ llm_context +") AS SOURCE"
                 else:
                     source_sql = f"CONCAT('"+formatted_template+"') AS SOURCE"
             else:
                 source_sql = ",' : ',".join([("IFNULL(a.\""+col.lower()+"\",'')") for col in source_columns])
-                if llm_train_source:
+                if llm_calssification_train_source:
                     source_sql = f"CONCAT({source_sql},{llm_context}) AS SOURCE"
                 else:
                     source_sql = f"CONCAT({source_sql}) AS SOURCE"
@@ -221,5 +223,6 @@ def create_classification_tables(database, schema, warehouse, table_name, source
 
     except Exception as e:
         logging.error(f"Error creating temporary table: {e}")
+        raise e
     return json.dumps(result)
 

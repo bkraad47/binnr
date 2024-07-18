@@ -12,8 +12,8 @@ def run_load_data_to_snowflake(database, schema, warehouse, file_path, table_nam
     return load_data_to_snowflake(database, schema, warehouse, file_path, table_name, role)
 
 @celery.task
-def run_create_classification_tables(database, schema, warehouse, table_name, source_columns, target_column, role, template=None, create_validation=False, llm_train_source=False):
-    return create_classification_tables(database, schema, warehouse, table_name, source_columns, target_column, role, template, create_validation, llm_train_source)
+def run_create_classification_tables(database, schema, warehouse, table_name, source_columns, target_column, role, template=None, create_validation=False, llm_calssification_train_source=False):
+    return create_classification_tables(database, schema, warehouse, table_name, source_columns, target_column, role, template, create_validation, llm_calssification_train_source)
 
 @celery.task
 def run_train_model(database, schema, role, warehouse, training_table):
