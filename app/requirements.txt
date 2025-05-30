@@ -7,7 +7,7 @@ python-dotenv
 swagger-ui-bundle
 snowflake-ml-python
 snowflake-snowpark-python==1.18.0
-scikit-learn==1.3.0
+scikit-learn==1.4.0
 pandas
 sqlalchemy
 snowflake-connector-python
